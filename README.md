@@ -20,6 +20,43 @@ Examples:
 pigIt('Pig latin is cool'); // igPay atinlay siay oolcay
 pigIt('Hello world !');     // elloHay orldway !
 ```
+
+### Task 3:
+Given an integer x, return true if x is a palindrome, and false otherwise.
+```
+Example 1:
+Input: x = 121
+Output: true
+
+Example 2:
+Input: x = -121
+Output: false
+
+Example 3:
+Input: x = 10
+Output: false
+```
+
+### Task 4:
+Given a string s containing just the characters '(', ')', '{', '}', '[' and ']', determine if the input string is valid.
+An input string is valid if:
+Open brackets must be closed by the same type of brackets.
+Open brackets must be closed in the correct order.
+Every close bracket has a corresponding open bracket of the same type.
+ ```
+Example 1:
+Input: s = "()"
+Output: true
+
+Example 2:
+Input: s = "()[]{}"
+Output: true
+
+Example 3:
+Input: s = "(]"
+Output: false
+```
+
 ## Відповіді на контрольні питання:
 ### 1. Чи є різниця між виконанням JavaScript в браузері та в середовищі Node.js?
 Так, є деякі різниці між виконанням JavaScript в браузері та в середовищі Node.js.
@@ -85,4 +122,14 @@ import myModule from './myModule';
 global.myModule = require('./myModule');
 ```
 ### 6. Як пов'язані Google Chrome / Chromium та Node.js?
+Google Chrome та Chromium - це веб-браузери, які використовуються для відображення веб-сторінок та виконання JavaScript-скриптів на стороні клієнта. Node.js - це середовище виконання JavaScript, яке дозволяє виконувати JavaScript-код на стороні сервера.
+
 ### 7. Як можна дозволити імпортувати змінні з поточного модуля?
+Використовувати ключове слово 'export' для експортування змінної з поточного модуля, а потім використовувати ключове слово 'import' в іншому модулі для імпортування цієї змінної. Наприклад:
+```
+// у файлі module1.js
+export const myVar = "Hello world!";
+
+// у файлі module2.js
+import { myVar } from "./module1.js";
+```
