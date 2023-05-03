@@ -140,15 +140,6 @@ app.post("/games", (req, res) => {
   res.redirect("admin");
 });
 
-app.post("/games/:id", (req, res) => {
-  const gameId = parseInt(req.params.id, 10);
-  const gameIndex = games.findIndex((g) => g.id === gameId);
-  if (gameIndex !== -1) {
-    games.splice(gameIndex, 1);
-  }
-  res.redirect("/admin");
-});
-
 app.post("/teams", (req, res) => {
   const { name } = req.body;
   // Перевіряємо, чи існує команда з введеною назвою в масиві
