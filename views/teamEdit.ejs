@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Редагувати команди</title>
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <h1>Редагувати команди</h1>
+    <form method="POST" action="/teams/?_method=PUT">
+      <label for="name">Назва команди:</label>
+      <input type="text" id="name" name="name" />
+      <br /><br />
+      <button type="submit">Зберегти зміни</button>
+    </form>
+    <form method="POST" action="/teams/?_method=DELETE">
+      <button type="submit">Видалити команду</button>
+    </form>
+  </body>
+</html>

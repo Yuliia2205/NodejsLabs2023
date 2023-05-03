@@ -1,0 +1,36 @@
+<footer>
+  <section>
+    <% if (games.length === 0) { %>
+    <p>Не знайдено жодної гри.</p>
+    <% } else { %>
+    <table>
+      <thead>
+        <tr>
+          <th>Дата</th>
+          <th>Назва команди №1</th>
+          <th>Результат команди №1</th>
+          <th>Назва команди №2</th>
+          <th>Результат команди №2</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% games.forEach(game => { %>
+        <tr>
+          <td><%= game.date %></td>
+          <td><%= teams.find(team => team.id === game.team1Id).name %></td>
+          <td><%= game.team1Score %></td>
+          <td><%= teams.find(team => team.id === game.team2Id).name %></td>
+          <td><%= game.team2Score %></td>
+          <td>
+            <form action="/games/<%= game.id %>" method="POST">
+              <input type="submit" value="Видалити" />
+            </form>
+          </td>
+        </tr>
+        <% }); %>
+      </tbody>
+    </table>
+    <% } %>
+  </section>
+</footer>
