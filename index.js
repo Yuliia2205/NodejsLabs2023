@@ -1,14 +1,12 @@
-const express = require("express");
-const bodyParser = require("body-parser");
-const path = require("path");
-const passport = require("passport");
-const session = require("express-session");
-const initializePassport = require("./src/passport-config");
-const { Team } = require("./src/Team");
-const { Game } = require("./src/Game");
-const { Result } = require("./src/Result");
+const express = require('express');
+const Joi = require('joi');
+
+const { Team } = require('./src/Team');
+const { Game } = require('./src/Game');
+const { Result } = require('./src/Result');
 
 const app = express();
+app.use(express.json());
 
 module.exports = Team;
 const teams = [
@@ -36,160 +34,248 @@ const games = [
 ];
 
 const results = [
-  new Result(0, 0),
-  new Result(1, 1),
-  new Result(2, 2),
-  new Result(3, 3),
-  new Result(4, 4),
-  new Result(5, 5),
-  new Result(6, 6),
-  new Result(7, 7),
-  new Result(8, 8),
-  new Result(9, 9),
-  new Result(10, 10),
+  new Result(0, 0, 0),
+  new Result(1, 1,1),
+  new Result(2, 2,2),
+  new Result(3, 3,3),
+  new Result(4, 4,4),
+  new Result(5, 5,5),
+  new Result(6, 6,6),
+  new Result(7, 7,7),
+  new Result(8, 8,8),
+  new Result(9, 9,9),
+  new Result(10, 10,10),
 ];
 
-app.set("views", path.join(__dirname, "views"));
-app.set("view engine", "ejs");
-app.use(bodyParser.urlencoded({ extended: true }));
+app.get('/games', (req, res) => {
+  res.status(200).send(games);
+});
 
-initializePassport(passport);
-
-app.use(
-  session({
-    secret: "secret",
-    resave: false,
-    saveUninitialized: false,
-  })
-);
-
-app.use(passport.initialize());
-app.use(passport.session());
-
-// Функція middleware для перевірки автентичності користувача
-function isAuth(req, res, next) {
-  if (req.isAuthenticated()) {
-    return next();
+app.get('/games/:id', (req, res) => {
+  const gameIndex = games.find((g) => g.id === parseInt(req.params.id, 10));
+  if (!gameIndex) {
+    return res.status(404).send('No games were found for this ID');
   }
-  res.redirect("/login");
+  return res.status(200).send(gameIndex);
+});
+
+// Ендпоінт для отримання списку ігор з пагінацією
+app.get('/pagination/games', (req, res) => {
+  // отримуємо параметри запиту
+  const page = parseInt(req.query.page, 10); // номер сторінки
+  const limit = parseInt(req.query.limit, 10); // кількість елементів на сторінці
+
+  // виконуємо пагінацію даних на основі параметрів запиту
+  const startIndex = (page - 1) * limit;
+  const endIndex = page * limit;
+  const paginatedGames = games.slice(startIndex, endIndex);
+
+  // повертаємо результат у форматі JSON
+  res.status(200).send(paginatedGames);
+});
+
+function validateGames(gameIndex) {
+  const obj = Joi.object({
+    date: Joi.string().required(),
+    team1Id: Joi.number().integer().min(1).max(teams.length)
+        .required(),
+    team2Id: Joi.number().integer().min(1).max(teams.length)
+        .required(),
+    team1Score: Joi.number().integer().min(0).max(10)
+        .required(),
+    team2Score: Joi.number().integer().min(0).max(10)
+        .required(),
+  });
+
+  return obj.validate(gameIndex);
 }
 
-app.get("/login", (req, res) => {
-  res.render("login");
-});
-
-// Обробляти запит на вхід
-app.post(
-  "/login",
-  passport.authenticate("local", {
-    successRedirect: "/admin",
-    failureRedirect: "/login",
-  })
-);
-
-// Обробляти запит на вихід
-app.get("/logout", (req, res) => {
-  req.logout();
-  res.redirect("/login");
-});
-
-// Захищений маршрут - доступний лише авторизованим користувачам
-app.get("/admin", isAuth, (req, res) => {
-  const teamQuery = req.query.team;
-  let filteredGames = games;
-  if (teamQuery) {
-    const team = teams.find((t) => t.name === teamQuery);
-    if (team) {
-      filteredGames = games.filter(
-        (g) => g.team1Id === team.id || g.team2Id === team.id
-      );
-    } else {
-      filteredGames = [];
-    }
+app.post('/games', (req, res) => {
+  const result = validateGames(req.body);
+  if (result.error) {
+    return res.status(400).send(result.error.details[0].message);
   }
-  res.render("admin", { teams, games: filteredGames, results });
+
+  const game = {
+    id: games.length + 1,
+    date: req.body.date,
+    team1Id: req.body.team1Id,
+    team2Id: req.body.team2Id,
+    team1Score: req.body.team1Score,
+    team2Score: req.body.team2Score,
+  };
+
+  games.push(game);
+  res.status(200).send(game);
 });
 
-app.get("/", (req, res) => {
-  const teamQuery = req.query.team;
-  let filteredGames = games;
-  if (teamQuery) {
-    const team = teams.find((t) => t.name === teamQuery);
-    if (team) {
-      filteredGames = games.filter(
-        (g) => g.team1Id === team.id || g.team2Id === team.id
-      );
-    } else {
-      filteredGames = [];
-    }
+app.put('/games/:id', (req, res) => {
+  const gameIndex = games.find((g) => g.id === parseInt(req.params.id, 10));
+  if (!gameIndex) {
+    return res.status(404).send('No games were found for this ID');
   }
-  res.render("guest", { teams, games: filteredGames, results });
+
+  const result = validateGames(req.body);
+  if (result.error) {
+    return res.status(400).send(result.error.details[0].message);
+  }
+
+  gameIndex.date = req.body.date;
+  gameIndex.team1Id = req.body.team1Id;
+  gameIndex.team2Id = req.body.team2Id;
+  gameIndex.team1Score = req.body.team1Score;
+  gameIndex.team2Score = req.body.team2Score;
+
+  res.status(200).send(gameIndex);
 });
 
-app.post("/games", (req, res) => {
-  const { date, team1Id, team2Id, team1Score, team2Score } = req.body;
-  const newGameId = games.length + 1;
-  games.push({
-    id: newGameId,
-    date,
-    team1Id: parseInt(team1Id, 10),
-    team2Id: parseInt(team2Id, 10),
-    team1Score: parseInt(team1Score, 10),
-    team2Score: parseInt(team2Score, 10),
+app.delete('/games/:id', (req, res) => {
+  const gameIndex = games.find((g) => g.id === parseInt(req.params.id, 10));
+  if (!gameIndex) {
+    return res.status(404).send('No games were found for this ID');
+  }
+
+  const index = games.indexOf(gameIndex);
+  games.splice(index, 1);
+
+  res.status(200).send(gameIndex);
+});
+
+app.get('/teams/filter', (req, res) => {
+  // отримуємо параметри запиту
+  const queryName = req.query.name; // назва команди, яку шукаємо
+  if (!queryName) {
+    return res.status(400).send('Missing search query');
+  }
+  // фільтруємо дані на основі параметрів запиту
+  const filteredTeams = teams.filter((team) => team.name.toLowerCase()
+      .includes(queryName.toLowerCase()));
+  if (filteredTeams.length <= 0) {
+    return res.status(404).send('No teams found for this name');
+  }
+  // повертаємо результат
+  return res.status(200).send(filteredTeams);
+});
+
+app.get('/teams/:id', (req, res) => {
+  const teamIndex = teams.find((t) => t.id === parseInt(req.params.id, 10));
+  if (!teamIndex) {
+    return res.status(404).send('No teams were found for this ID');
+  }
+  return res.status(200).status(200).send(teamIndex);
+});
+
+function validateTeams(teamIndex) {
+  const obj = Joi.object({
+    name: Joi.string().min(3).max(20).required(),
   });
-  res.redirect("admin");
-});
 
-app.post('/games/:id', (req, res) => {
-  const gameId = parseInt(req.params.id, 10);
-  const gameIndex = games.findIndex((g) => g.id === gameId);
-  if (gameIndex !== -1) {
-    games.splice(gameIndex, 1);
+  return obj.validate(teamIndex);
+}
+
+app.post('/teams', (req, res) => {
+  const result = validateTeams(req.body);
+  if (result.error) {
+    return res.status(400).send(result.error.details[0].message);
   }
-  res.redirect('/admin');
+
+  const team = {
+    id: teams.length + 1,
+    name: req.body.name,
+  };
+
+  teams.push(team);
+  res.status(200).send(team);
 });
 
-app.post("/teams", (req, res) => {
-  const { name } = req.body;
-  // Перевіряємо, чи існує команда з введеною назвою в масиві
-  const existingTeamIndex = teams.findIndex((team) => team.name === name);
-  if (existingTeamIndex !== -1) {
-    // Якщо команда існує, то видаляємо її з масиву
-    teams.splice(existingTeamIndex, 1);
-  } else {
-    // Якщо команда не існує, то додаємо її до масиву
-    const newTeamId = teams.length + 1;
-    teams.push(new Team(newTeamId, name));
+app.put('/teams/:id', (req, res) => {
+  const teamIndex = teams.find((t) => t.id === parseInt(req.params.id, 10));
+  if (!teamIndex) {
+    return res.status(404).send('No teams were found for this ID');
   }
-  res.redirect("/admin");
-});
 
-// Відображення форми редагування команди
-app.post("/teams/edit", (req, res) => {
-  const teamName = req.params.name;
-  const team = teams.find((t) => t.name === teamName);
-  res.render("teamEdit", { team });
-});
-
-app.post("/team", (req, res) => {
-  const searchTeam = req.body.name;
-  if (!searchTeam) {
-    return res.status(400).send("Missing search query");
+  const result = validateTeams(req.body);
+  if (result.error) {
+    return res.status(400).send(result.error.details[0].message);
   }
-  const nameTeam = teams.find((t) => t.name === searchTeam);
 
-  if (!nameTeam) {
-    return res.status(404).send(`No games found for team '${searchTeam}'`);
-  }
-  const teamGames = games.filter(
-    (game) => game.team1Id === nameTeam.id || game.team2Id === nameTeam.id
-  );
+  teamIndex.name = req.body.name;
 
-  res.render("team", { teams, team: nameTeam, games: teamGames });
+  res.status(200).send(teamIndex);
 });
 
-app.use(express.static("public"));
+app.delete('/teams/:id', (req, res) => {
+  const teamIndex = teams.find((t) => t.id === parseInt(req.params.id, 10));
+  if (!teamIndex) {
+    return res.status(404).send('No teams were found for this ID');
+  }
+
+  const index = teams.indexOf(teamIndex);
+  teams.splice(index, 1);
+
+  res.status(200).send(teamIndex);
+});
+
+app.get('/results', (req, res) => {
+  res.status(200).send(results);
+});
+
+function validateResult(resultIndex) {
+  const obj = Joi.object({
+    team1Score: Joi.number().integer().min(0).max(100)
+        .required(),
+    team2Score: Joi.number().integer().min(0).max(100)
+        .required(),
+  });
+
+  return obj.validate(resultIndex);
+}
+
+app.post('/results', (req, res) => {
+    const result = validateResult(req.body);
+    if (result.error) {
+        return res.status(400).send(result.error.details[0].message);
+    }
+
+    const newResult = {
+        id: results.length + 1,
+        team1Score: req.body.team1Score,
+        team2Score: req.body.team2Score,
+    };
+
+    results.push(newResult);
+    res.status(200).send(result);
+});
+
+app.put('/results/:id', (req, res) => {
+    const resultIndex = results.find((r) => r.id === parseInt(req.params.id, 10));
+    if (!resultIndex) {
+        return res.status(404).send('No results were found for this ID');
+    }
+
+    const result = validateResult(req.body);
+    if (result.error) {
+        return res.status(400).send(result.error.details[0].message);
+    }
+
+    resultIndex.team1Score = req.body.team1Score;
+    resultIndex.team2Score = req.body.team2Score;
+
+    res.status(200).send(resultIndex);
+});
+
+app.delete('/results/:id', (req, res) => {
+    const resultIndex = results.find((r) => r.id === parseInt(req.params.id, 10));
+    if (!resultIndex) {
+        return res.status(404).send('No results were found for this ID');
+    }
+
+    const index = results.indexOf(resultIndex);
+    results.splice(index, 1);
+
+    res.status(200).send(resultIndex);
+});
 
 app.listen(3030, () => {
-  console.log("Server running at http://localhost:3030/");
+  console.log('Server running at http://localhost:3030/');
 });
