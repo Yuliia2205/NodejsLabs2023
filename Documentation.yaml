@@ -1,0 +1,388 @@
+openapi: 3.0.3
+info:
+  title: Game API
+  description: An API for managing game information
+  version: 1.0.0
+servers:
+  - url: http://localhost:3030
+paths:
+  /games:
+    get:
+      summary: Get all games
+      operationId: getAllGames
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Game'
+    post:
+      summary: Create a new game
+      operationId: createGame
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GameInput'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Game'
+        '400':
+          description: Bad Request
+          content:
+            text/plain:
+              schema:
+                type: string
+  /games/{id}:
+      parameters:
+        - name: id
+          in: path
+          description: ID of the game
+          required: true
+          schema:
+            type: integer
+      get:
+        summary: Get a game by ID
+        operationId: getGameById
+        responses:
+          '200':
+            description: OK
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Game'
+          '404':
+            description: Not Found
+            content:
+              text/plain:
+                schema:
+                  type: string
+      put:
+        summary: Update a game by ID
+        operationId: updateGameById
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameInput'
+        responses:
+          '200':
+            description: OK
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Game'
+          '400':
+            description: Bad Request
+            content:
+              text/plain:
+                schema:
+                  type: string
+          '404':
+            description: Not Found
+            content:
+              text/plain:
+                schema:
+                  type: string
+      delete:
+        summary: Delete a game by ID
+        operationId: deleteGameById
+        responses:
+          '200':
+            description: OK
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Game'
+          '404':
+            description: Not Found
+            content:
+              text/plain:
+                schema:
+                  type: string
+  /pagination/games:
+    get:
+      summary: Retrieve a paginated list of games
+      parameters:
+        - name: page
+          in: query
+          description: Page number to retrieve
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+        - name: limit
+          in: query
+          description: Number of items to retrieve per page
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Game'
+  /teams/filter:
+    get:
+      summary: Retrieve a filtered list of teams
+      parameters:
+        - name: name
+          in: query
+          description: Team name to filter by
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Team'
+        '400':
+          description: Bad Request
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: Not Found
+          content:
+            text/plain:
+              schema:
+                type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Team'
+  /teams/{id}:
+    get:
+      summary: Get team by ID
+      parameters:
+        - name: id
+          in: path
+          description: ID of the team to retrieve
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Team found and returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+        '404':
+          description: Team not found
+
+    put:
+      summary: Update team by ID
+      parameters:
+        - name: id
+          in: path
+          description: ID of the team to update
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: body
+          description: Updated team object
+          required: true
+          schema:
+            $ref: '#/components/schemas/TeamInput'
+      responses:
+        '200':
+          description: Team updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+        '400':
+          description: Invalid input
+        '404':
+          description: Team not found
+
+    delete:
+      summary: Delete team by ID
+      parameters:
+        - name: id
+          in: path
+          description: ID of the team to delete
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Team deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+        '404':
+          description: Team not found
+
+  /teams:
+      post:
+        summary: Create a new team
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamInput'
+        responses:
+          '200':
+            description: Team created successfully
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Team'
+          '400':
+            description: Invalid input
+  /results:
+    get:
+      summary: Get all results
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    team1Score:
+                      type: integer
+                    team2Score:
+                      type: integer
+    post:
+      summary: Add a new result
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                team1Score:
+                  type: integer
+                team2Score:
+                  type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  team1Score:
+                    type: integer
+                  team2Score:
+                    type: integer
+        '400':
+          description: Bad Request
+          content:
+            text/plain:
+              schema:
+                type: string
+  /results/{id}:
+    parameters:
+      - name: id
+        in: path
+        description: ID of the sports result
+        required: true
+        schema:
+          type: integer
+    put:
+      summary: Update a sports result
+      operationId: updateResult
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SportsResult'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SportsResult'
+        '400':
+          description: Bad Request
+        '404':
+          description: Not Found
+    delete:
+      summary: Delete a sports result
+      operationId: deleteResult
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SportsResult'
+        '404':
+          description: Not Found
+components:
+  schemas:
+    Game:
+      type: object
+      properties:
+        id:
+          type: integer
+        date:
+          type: string
+          format: date-time
+        team1Id:
+          type: integer
+        team2Id:
+          type: integer
+        team1Score:
+          type: integer
+        team2Score:
+          type: integer
+    GameInput:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date-time
+        team1Id:
+          type: integer
+        team2Id:
+          type: integer
+        team1Score:
+          type: integer
+        team2Score:
+          type: integer
+      required:
+        - date
+        - team1Id
+        - team2Id
+        - team1Score
