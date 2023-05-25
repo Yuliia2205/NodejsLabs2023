@@ -61,3 +61,10 @@ app.listen(3030, () => {
   playerController.connection.connect();
     sqlRequestController.connection.connect();
 });
+
+app.on('close', () => {
+  gameController.connection.close();
+  teamController.connection.close();
+  playerController.connection.close();
+    sqlRequestController.connection.close();
+}
